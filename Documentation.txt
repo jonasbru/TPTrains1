@@ -2,37 +2,15 @@
 #          Train spotting Documentation           #
 #                                                 #
 #                 Michael Fagno                   #
-#              Jonas Bru Monserrat                #
+#              			Jonas Bru                     #
 ###################################################
 
-0) High-level description
-
-	We have placed sensors before each intersection of each side of the track. There are two types of track sections, critical sections and sections with two parallel rails (three of each in the given circuit).
+0) What is the purpose of each method in the monitor?
+ -enter(): Waits until the section protected by the monitor is free, and then ensures that nobody else enters the section until the "leave" method is called.
+ -leave(): Signals when the section protected by the monitor is free.
+ -tryEnter(): Checks if the section protected by the monitor is free. If the section is free, ensures that nobody else enters the section until the "leave" method is called and return true. Otherwise, if the section is not free, returns false.
+ 
+1) How many conditional variables, if any, are needed in your solution? Justify your answer.
+	We need 1 conditional variable, to know if the section is not free.
 	
-	Each section is associated with a semaphore, and each semaphore is associated with sensors placed around the section. For critical sections, the semaphore can prevent two trains to be on the section at the same time. For the two-lane sections, the semaphore can determine which path to take to avoid two trains to be on the same track.
-	
-	In addition, we have placed sensors before each station so that trains know when to stop.
-	
-	When a train passes over a sensor, we look at which sensor it is, and so we retrieve the associated semaphore. According to the state of it, the train continues, stops or takes another rail if possible.
-	
-	In addition, we keep in memory the current section of the train, so that when the train passes over a sensor, we known if it enters or exits the section associated with the sensor.
 
-1) Placement of the sensors
-
-	All sensors are placed at the same distance from intersections so that we can determine the maximum speed of trains (trains have a stop distance linked to their speed). Trains must be able to stop before the intersection from the time they passed over the sensor. We set the minimal distance of 3 units (With this distance trains can't be either on an intersection and on a sensor).
-
-	There are 4 sensors near stations which allow trains to know when to stop. Its detector also respect the minimum distance of 3 units before the end of the track.
-
-2) Choice of critical sections
-
-	We have identified three critical sections. Two sections protect areas where there is only one rail (bottom left and middle right). Its allow that there is no more than one train simultaneously on these areas.
-	
-	The last critical section protects the intersection (perpendicular) top left: there can be only one train around this intersection to avoid crashes.
-	
-3) Maximum train speed and the reason for it
-	The maximum speed of the trains is 22. This is the maximum speed that allows trains to stop before 3 units of distance (minimum distance between an intersection and a detector).
-	
-4) How you tested your solution
-	We placed a detector 3 units of an intersection and we have checked that the train has time to stop before the intersection.
-
-	We tested the entire program by running the simulation (accelerated) with trains with very different speeds (5 and 20 for example) and we have verified that there are no problems
