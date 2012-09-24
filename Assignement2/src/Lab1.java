@@ -1,6 +1,7 @@
 
 import TSim.*;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Lab1 {
 
@@ -32,12 +33,12 @@ public class Lab1 {
 
 class Train extends Thread {
 
-    public static Semaphore cs1 = new Semaphore(1); //Critical Section 1
-    public static Semaphore cs2 = new Semaphore(1); //Critical Section 2
-    public static Semaphore cs3 = new Semaphore(1); //Critical Section 3
-    public static Semaphore tw1 = new Semaphore(0); //Two Ways section 1
-    public static Semaphore tw2 = new Semaphore(1); //Two Ways section 2
-    public static Semaphore tw3 = new Semaphore(0); //Two Ways section 3
+    public static Track cs1 = new Track(); //Critical Section 1
+    public static Track cs2 = new Track(); //Critical Section 2
+    public static Track cs3 = new Track(); //Critical Section 3
+    public static Track tw1 = new Track(true); //Two Ways section 1
+    public static Track tw2 = new Track(); //Two Ways section 2
+    public static Track tw3 = new Track(true); //Two Ways section 3
     int id; //Train id
     int speed;
     TAKEN_CS takenCS = TAKEN_CS.NONE; //None of the trains start in a CS
@@ -139,7 +140,7 @@ class Train extends Thread {
                 || se.getXpos() == 6 && se.getYpos() == 6
                 || se.getXpos() == 10 && se.getYpos() == 8) {
             if (takenCS == TAKEN_CS.SC3) {
-                cs3.release();
+                cs3.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs3);
@@ -147,7 +148,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 14 && se.getYpos() == 7) { //SC2
             if (takenCS == TAKEN_CS.SC2) {
-                cs2.release();
+                cs2.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs2);
@@ -156,7 +157,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 15 && se.getYpos() == 8) {
             if (takenCS == TAKEN_CS.SC2) {
-                cs2.release();
+                cs2.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs2);
@@ -165,7 +166,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 12 && se.getYpos() == 9) {
             if (takenCS == TAKEN_CS.SC2) {
-                cs2.release();
+                cs2.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs2);
@@ -174,7 +175,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 13 && se.getYpos() == 10) {
             if (takenCS == TAKEN_CS.SC2) {
-                cs2.release();
+                cs2.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs2);
@@ -183,7 +184,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 7 && se.getYpos() == 9) { //SC1
             if (takenCS == TAKEN_CS.SC1) {
-                cs1.release();
+                cs1.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs1);
@@ -192,7 +193,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 6 && se.getYpos() == 10) {
             if (takenCS == TAKEN_CS.SC1) {
-                cs1.release();
+                cs1.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs1);
@@ -201,7 +202,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 6 && se.getYpos() == 11) {
             if (takenCS == TAKEN_CS.SC1) {
-                cs1.release();
+                cs1.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs1);
@@ -210,7 +211,7 @@ class Train extends Thread {
             }
         } else if (se.getXpos() == 4 && se.getYpos() == 13) {
             if (takenCS == TAKEN_CS.SC1) {
-                cs1.release();
+                cs1.leave();
                 takenCS = TAKEN_CS.NONE;
             } else {
                 testCriticalSection(cs1);
@@ -224,7 +225,7 @@ class Train extends Thread {
         if (se.getXpos() == 19 && se.getYpos() == 8) { //IN3
             if (takenTW == TAKEN_TW.IN3) {
                 if (fast) {
-                    tw3.release();
+                    tw3.leave();
                 }
                 takenTW = TAKEN_TW.NONE;
             } else {
@@ -234,7 +235,7 @@ class Train extends Thread {
         } else if (se.getXpos() == 18 && se.getYpos() == 9) { //IN2
             if (takenTW == TAKEN_TW.IN2) {
                 if (fast) {
-                    tw2.release();
+                    tw2.leave();
                 }
                 takenTW = TAKEN_TW.NONE;
             } else {
@@ -244,7 +245,7 @@ class Train extends Thread {
         } else if (se.getXpos() == 1 && se.getYpos() == 9) {
             if (takenTW == TAKEN_TW.IN2) {
                 if (fast) {
-                    tw2.release();
+                    tw2.leave();
                 }
                 takenTW = TAKEN_TW.NONE;
             } else {
@@ -254,7 +255,7 @@ class Train extends Thread {
         } else if (se.getXpos() == 1 && se.getYpos() == 10) { //IN1
             if (takenTW == TAKEN_TW.IN1) {
                 if (fast) {
-                    tw1.release();
+                    tw1.leave();
                 }
                 takenTW = TAKEN_TW.NONE;
             } else {
@@ -264,16 +265,16 @@ class Train extends Thread {
         }
     }
 
-    private void testCriticalSection(Semaphore s) throws CommandException, InterruptedException {
+    private void testCriticalSection(Track s) throws CommandException, InterruptedException {
         TSimInterface tsi = TSimInterface.getInstance();
-        if (s.tryAcquire() == false) {
+        if (s.tryEnter() == false) {
             tsi.setSpeed(this.id, 0);
-            s.acquire();
+            s.enter();
             tsi.setSpeed(this.id, this.speed);
         }
     }
 
-    private void chooseFreeWay(Semaphore s, int xin, int yin, int fastestWay) throws CommandException, InterruptedException {
+    private void chooseFreeWay(Track s, int xin, int yin, int fastestWay) throws CommandException, InterruptedException {
         TSimInterface tsi = TSimInterface.getInstance();
         int otherWay;
         if (fastestWay == TSimInterface.SWITCH_LEFT) {
@@ -282,12 +283,70 @@ class Train extends Thread {
             otherWay = TSimInterface.SWITCH_LEFT;
         }
 
-        if (s.tryAcquire() == false) { // Fastest way occuped
+        if (s.tryEnter() == false) { // Fastest way occuped
             tsi.setSwitch(xin, yin, otherWay);
             fast = false;
         } else { // We take the fastest way
             tsi.setSwitch(xin, yin, fastestWay);
             fast = true;
         }
+    }
+}
+
+class Track {
+
+    private boolean occupated;
+    private final ReentrantLock lock = new ReentrantLock();
+    private Condition empty = lock.newCondition();
+
+    public Track(boolean occupated) {
+        this.occupated = occupated;
+    }
+
+    public Track() {
+        this.occupated = false;
+    }
+
+    public void enter() {
+        lock.lock();
+        try {
+            if (this.occupated) {
+                this.empty.await();
+            }
+            occupated = true;
+        } catch (InterruptedException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void leave() {
+        lock.lock();
+        try {
+            this.empty.signal();
+            occupated = false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean tryEnter() {
+        boolean ret;
+
+        lock.lock();
+        try {
+            if(!this.occupated) {
+                occupated = true;
+                ret = true;
+            } else {
+                ret = false;
+            }
+        } finally {
+            lock.unlock();
+        }
+        
+        return ret;
     }
 }
