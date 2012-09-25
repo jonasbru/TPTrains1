@@ -310,7 +310,7 @@ class Track {
     public void enter() {
         lock.lock();
         try {
-            if (this.occupated) {
+            while (this.occupated) {
                 this.empty.await();
             }
             occupated = true;
